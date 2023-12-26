@@ -1,31 +1,35 @@
-import { useForm } from "react-hook-form";
-import type { SubmitHandler } from "react-hook-form";
-
-type Inputs = {
-  email: string;
-};
+import { useRouter } from "next/navigation";
+import { signInWithPopup, type AuthError } from "firebase/auth";
+import { auth, googleProvider } from "@/lib/firebase/auth";
+import { useAuthState } from "@/lib/firebase/hooks";
 
 export default function Home() {
-  const { register, handleSubmit } = useForm<Inputs>();
+  const router = useRouter();
+  useAuthState(auth, (user) => {
+    if (user) {
+      router.push("/dashboard");
+    } else {
+      return;
+    }
+  });
 
-  const onSubmit: SubmitHandler<Inputs> = (data) => {
-    console.log(data);
+  const onSignInGoogle = async () => {
+    try {
+      const result = await signInWithPopup(auth, googleProvider);
+      const user = result.user;
+    } catch (error) {
+      const err = error as AuthError;
+      console.error({ code: err.code, message: err.message });
+    }
   };
 
   return (
     <main className="grid min-h-svh">
-      <form
-        className="m-auto flex flex-col gap-4"
-        onSubmit={handleSubmit(onSubmit)}
-      >
-        <label htmlFor="email" className="font-bold text-2xl">
-          Email
-        </label>
-        <input className="w-64 border border-gray-500" {...register("email")} />
-        <button type="submit" className="bg-slate-200 w-64">
-          Sign In
+      <div className="m-auto">
+        <button className="bg-slate-200 w-64" onClick={onSignInGoogle}>
+          Sign In with Google
         </button>
-      </form>
+      </div>
     </main>
   );
 }
